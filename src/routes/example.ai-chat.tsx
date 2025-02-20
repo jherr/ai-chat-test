@@ -1,67 +1,55 @@
-import { useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
-import { createServerFn } from '@tanstack/start'
+import { useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/start";
 
-import type { ChangeEvent, FormEvent } from 'react'
+import type { ChangeEvent, FormEvent } from "react";
 
 type Message = {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-}
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+};
 
-export const Route = createFileRoute('/example/ai-chat')({
+export const Route = createFileRoute("/example/ai-chat")({
   component: AIChat,
-})
+});
 
-const chat = createServerFn({ method: 'POST' })
+const chat = createServerFn({ method: "POST" })
   .validator((data: unknown) => {
-    return data as Array<Message>
+    return data as Array<Message>;
   })
   .handler(({ data }) => {
-    return fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
+    return fetch("http://localhost:3000/stream", {
+      method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
         messages: data,
       }),
-    }).then((response) => {
-      return response.json()
-    })
-  })
+    });
+  });
 
 function AIChat() {
-  const [input, setInput] = useState('')
-  const [messages, setMessages] = useState<Array<Message>>([])
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Array<Message>>([]);
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: input,
-    }
-    const newMessages = [...messages, newMessage]
-    setMessages(newMessages)
-    setInput('')
+    e.preventDefault();
 
-    const out = await chat({ data: newMessages })
-    setMessages([...newMessages, out.choices[0].message])
-  }
+    const out = await chat({ data: messages });
+    console.log(out);
+  };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value)
-  }
+    setInput(e.target.value);
+  };
 
   return (
     <div className="flex flex-col py-10 px-10 text-2xl">
       {messages.map((m) => (
         <div key={m.id} className="whitespace-pre-wrap">
-          {m.role === 'user' ? 'User: ' : 'AI: '}
+          {m.role === "user" ? "User: " : "AI: "}
           {m.content}
         </div>
       ))}
@@ -75,5 +63,5 @@ function AIChat() {
         />
       </form>
     </div>
-  )
+  );
 }
